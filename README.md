@@ -1,7 +1,4 @@
-This is only provided for people who cannot do admin consent. And brings additional manual steps as work around to consent permissions required by MCP server individually. This branch does not do admin consent for Microsoft Graph User.Read permission to avoid permission issues. Please use below url to consent this permission manually after deploy, before you test the MCP server in VS Code:
-```
-https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize?client_id=<client-id-created-by-azd-up>&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000&response_mode=query&scope=User.Read&state=12345&code_challenge=FKb6UkkRio0kIiAfYzJoVa4GGmZ6v6QVgQ5PjTA2iMk&code_challenge_method=S256
-```
+This is only provided for people who cannot do admin consent. And brings additional manual steps as work around to consent permissions required by MCP server individually. This branch does not do admin consent for Microsoft Graph User.Read permission to avoid permission issues. Please follow step 2 in Quick Start section to consent the User.Read permission manually.
 
 > This is for TEST PURPOSE only! Do not leverage this method to consent in production environment.
 
