@@ -32,6 +32,14 @@ resource mcpEntraApp 'Microsoft.Graph/applications@v1.0' = {
       }
     ]
     requestedAccessTokenVersion: 2
+    preAuthorizedApplications: [
+      {
+        appId: 'aebc6443-996d-45c2-90f0-388ff96faa56'
+        delegatedPermissionIds: [
+          guid(mcpAppUniqueName, 'user_impersonate')
+        ]
+      }
+    ]
   }
   requiredResourceAccess: [
     {
@@ -44,6 +52,11 @@ resource mcpEntraApp 'Microsoft.Graph/applications@v1.0' = {
       ]
     }
   ]
+  spa: {
+    redirectUris: [
+      'http://localhost:3000'
+    ]
+  }
 
   resource fic 'federatedIdentityCredentials@v1.0' = {
     name: '${mcpEntraApp.uniqueName}/msiAsFic'
@@ -56,19 +69,8 @@ resource mcpEntraApp 'Microsoft.Graph/applications@v1.0' = {
   }
 }
 
-resource microsoftGraphServicePrincipal 'Microsoft.Graph/servicePrincipals@v1.0' existing = {
-  appId: '00000003-0000-0000-c000-000000000000'
-}
-
 resource applicationRegistrationServicePrincipal 'Microsoft.Graph/servicePrincipals@v1.0' = {
   appId: mcpEntraApp.appId
-}
-
-resource grants 'Microsoft.Graph/oauth2PermissionGrants@v1.0' = {
-  clientId: applicationRegistrationServicePrincipal.id
-  consentType: 'AllPrincipals'
-  resourceId: microsoftGraphServicePrincipal.id
-  scope: 'User.Read'
 }
 
 // Outputs
