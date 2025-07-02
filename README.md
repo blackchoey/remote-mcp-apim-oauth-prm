@@ -45,7 +45,8 @@ This will provision:
 ### 2. Manually consent required permission
 Replace tenant id and client id in below url and use the url to manually login and consent User.Read permission for your MCP server. Everyone who try this MCP server needs to take this step individually.
 You can find the value of client id in APIM's `McpClientId` Named Value.
-Continue the next step after Entra ID redirected you to localhost.
+
+Continue the next step after Entra ID redirected you to localhost. It's expected that the redirected localhost page cannot be accessed. As long as you finished the consent step from Entra ID side, you're good to go to the next step.
 ```
 https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize?client_id={client-id-created-by-azd-up}&response_type=code&redirect_uri=http%3A%2F%2Flocalhost%3A3000&response_mode=query&scope=User.Read&state=12345&code_challenge=FKb6UkkRio0kIiAfYzJoVa4GGmZ6v6QVgQ5PjTA2iMk&code_challenge_method=S256
 ```
@@ -60,7 +61,7 @@ https://login.microsoftonline.com/{tenant}/oauth2/v2.0/authorize?client_id={clie
    - Select `HTTP` as the server type
    - Enter the endpoint URL from the `azd up` output:
    
-   ![azd up result](azdup.png)
+   ![azd up result](azdup.PNG)
 
 3. **Authorize and Test**:
    - After a while, VS Code will prompt you to sign in to Microsoft
