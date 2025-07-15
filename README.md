@@ -46,7 +46,7 @@ This will provision:
    - Select `HTTP` as the server type
    - Enter the endpoint URL from the `azd up` output:
    
-   ![azd up result](azdup.png)
+   ![azd up result](azdup.PNG)
 
 3. **Authorize and Test**:
    - After a while, VS Code will prompt you to sign in to Microsoft
