@@ -12,6 +12,9 @@ param tenantId string = tenant().tenantId
 @description('The principle id of the user-assigned managed identity')
 param userAssignedIdentityPrincipleId string
 
+@description('The web app name for callback URL configuration')
+param webAppName string
+
 var loginEndpoint = environment().authentication.loginEndpoint
 var issuer = '${loginEndpoint}${tenantId}/v2.0'
 
@@ -54,7 +57,7 @@ resource mcpEntraApp 'Microsoft.Graph/applications@v1.0' = {
   ]
   spa: {
     redirectUris: [
-      'http://localhost:3000'
+      'https://${webAppName}.azurewebsites.net/auth/callback'
     ]
   }
 

@@ -17,7 +17,7 @@
             </set-header>
             <set-body>@{
                 return JsonConvert.SerializeObject(new {
-                    resource = "{{McpClientId}}",
+                    resource = "{{APIMGatewayURL}}",
                     authorization_servers = new[] {
                         $"https://login.microsoftonline.com/{{McpTenantId}}/v2.0"
                     },

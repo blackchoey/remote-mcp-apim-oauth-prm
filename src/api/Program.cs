@@ -9,6 +9,7 @@ builder.Services.Configure<AzureAdOptions>(
 
 // Register services
 builder.Services.AddHttpContextAccessor();
+builder.Services.AddControllers();
 
 // Configure MCP server
 builder.Services.AddMcpServer()
@@ -20,6 +21,7 @@ builder.Services.AddMcpServer()
 
 var app = builder.Build();
 
+app.MapControllers();
 app.MapMcp();
 
 app.Run();

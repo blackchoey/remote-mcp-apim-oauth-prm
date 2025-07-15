@@ -1,8 +1,8 @@
 # yaml-language-server: $schema=https://raw.githubusercontent.com/Azure/azure-dev/main/schemas/v1.0/azure.yaml.json
 
-name: remote-mcp-aspnetcore
+name: remote-mcp-apim-oauth-prm
 metadata:
-  template: remote-mcp-aspnetcore@1.0.0
+  template: remote-mcp-apim-oauth-prm@1.0.0
 services:
   api:
     project: ./src/api

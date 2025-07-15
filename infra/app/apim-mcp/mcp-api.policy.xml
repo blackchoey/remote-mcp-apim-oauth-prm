@@ -26,7 +26,7 @@
                 <return-response>
                     <set-status code="401" reason="Unauthorized" />
                     <set-header name="WWW-Authenticate" exists-action="override">
-                        <value>Bearer error="invalid_token", resource_metadata="{{APIMGatewayURL}}/mcp/prm"</value>
+                        <value>Bearer error="invalid_token", resource_metadata="{{APIMGatewayURL}}/.well-known/oauth-protected-resource"</value>
                     </set-header>
                 </return-response>
             </when>

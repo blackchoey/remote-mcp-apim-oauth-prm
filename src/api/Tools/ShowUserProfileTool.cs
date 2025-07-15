@@ -4,6 +4,11 @@ using RemoteMcpMsGraph.Configuration;
 using RemoteMcpMsGraph.Utilities;
 using System.ComponentModel;
 using System.Text.Json;
+using Azure.Identity;
+using Microsoft.Graph;
+using System.Security.Cryptography;
+using System.Text;
+using Microsoft.Identity.Client;
 
 namespace RemoteMcpMsGraph.Tools;
 
@@ -88,12 +93,80 @@ public class ShowUserProfileTool
 
             return JsonSerializer.Serialize(userProfile, CreateJsonSerializerOptions());
         }
+        catch (AuthenticationFailedException ex)
+        {
+            if (ex.InnerException is MsalClaimsChallengeException msalException && 
+                msalException.ErrorCode == "invalid_grant")
+            {
+                var loginUrl = GenerateLoginUrl();
+                var consentResponse = new 
+                { 
+                    error = "User consent required",
+                    message = "Please provide the following URL to user and ask them to login in order to call Microsoft Graph API",
+                    loginUrl = loginUrl
+                };
+                return JsonSerializer.Serialize(consentResponse, CreateJsonSerializerOptions());
+            }
+
+            _logger.LogError(ex, "Authentication failed while retrieving user profile");
+            return CreateErrorResponse($"Authentication failed: {ex.Message}");
+        }
         catch (Exception ex)
         {
             _logger.LogError(ex, "Unexpected error occurred while retrieving user profile");
             return CreateErrorResponse($"An unexpected error occurred: {ex.Message}");
         }
     }
+
+    private string GenerateLoginUrl()
+    {
+        var httpContext = _httpContextAccessor.HttpContext;
+        var host = httpContext!.Request.Host.Value;
+        var callbackUrl = $"https://{host}/auth/callback";
+
+        // Generate PKCE parameters
+        var codeVerifier = GenerateCodeVerifier();
+        var codeChallenge = GenerateCodeChallenge(codeVerifier);
+
+        var scopes = "User.Read"; // Microsoft Graph scope
+        var loginUrl = $"https://login.microsoftonline.com/{_azureAdOptions.TenantId}/oauth2/v2.0/authorize?" +
+                      $"client_id={_azureAdOptions.ClientId}&" +
+                      $"response_type=code&" +
+                      $"redirect_uri={Uri.EscapeDataString(callbackUrl)}&" +
+                      $"response_mode=query&" +
+                      $"scope={Uri.EscapeDataString(scopes)}&" +
+                      $"state=consent_required&" +
+                      $"code_challenge={Uri.EscapeDataString(codeChallenge)}&" +
+                      $"code_challenge_method=S256";
+
+        return loginUrl;
+    }
+
+    private static string GenerateCodeVerifier()
+    {
+        const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~";
+        var random = new Random();
+        var codeVerifier = new StringBuilder();
+        
+        // Code verifier should be 43-128 characters long
+        for (int i = 0; i < 128; i++)
+        {
+            codeVerifier.Append(chars[random.Next(chars.Length)]);
+        }
+        
+        return codeVerifier.ToString();
+    }
+
+    private static string GenerateCodeChallenge(string codeVerifier)
+    {
+        using var sha256 = SHA256.Create();
+        var challengeBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(codeVerifier));
+        return Convert.ToBase64String(challengeBytes)
+            .TrimEnd('=')
+            .Replace('+', '-')
+            .Replace('/', '_');
+    }
+
     private static JsonSerializerOptions CreateJsonSerializerOptions()
     {
         return new JsonSerializerOptions

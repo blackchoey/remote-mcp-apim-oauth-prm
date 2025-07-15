@@ -71,6 +71,7 @@ module mcpEntraApp './app/apim-mcp/mcp-entra-app.bicep' = {
     mcpAppUniqueName: !empty(mcpEntraApplicationUniqueName) ? mcpEntraApplicationUniqueName : 'mcp-api-${apimResourceToken}'
     mcpAppDisplayName: !empty(mcpEntraApplicationDisplayName) ? mcpEntraApplicationDisplayName : 'MCP-API-${apimResourceToken}'
     userAssignedIdentityPrincipleId: mcpUserAssignedIdentity.outputs.identityPrincipalId
+    webAppName: webAppName
   }
 }
 
@@ -152,4 +153,4 @@ output AZURE_LOCATION string = location
 output AZURE_TENANT_ID string = tenant().tenantId
 output SERVICE_API_NAME string = apiWebApp.outputs.SERVICE_API_NAME
 output WEBAPP_NAME string = apiWebApp.outputs.SERVICE_API_NAME
-output SERVICE_API_ENDPOINTS array = ['${apimService.outputs.gatewayUrl}/mcp/']
+output SERVICE_API_ENDPOINTS array = ['${apimService.outputs.gatewayUrl}/']

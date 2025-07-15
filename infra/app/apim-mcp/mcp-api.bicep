@@ -63,7 +63,7 @@ resource mcpApi 'Microsoft.ApiManagement/service/apis@2023-05-01-preview' = {
     displayName: 'MCP API'
     description: 'Model Context Protocol API endpoints'
     subscriptionRequired: false
-    path: 'mcp'
+    path: '/'
     protocols: [
       'https'
     ]
@@ -84,30 +84,6 @@ resource mcpApiPolicy 'Microsoft.ApiManagement/service/apis/policies@2023-05-01-
     mcpTenantIdNamedValue
     mcpClientIdNamedValue
   ]
-}
-
-// Create the SSE endpoint operation
-resource mcpSseOperation 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
-  parent: mcpApi
-  name: 'mcp-sse'
-  properties: {
-    displayName: 'MCP SSE Endpoint'
-    method: 'GET'
-    urlTemplate: '/sse'
-    description: 'Server-Sent Events endpoint for MCP Server'
-  }
-}
-
-// Create the message endpoint operation
-resource mcpMessageOperation 'Microsoft.ApiManagement/service/apis/operations@2023-05-01-preview' = {
-  parent: mcpApi
-  name: 'mcp-message'
-  properties: {
-    displayName: 'MCP Message Endpoint'
-    method: 'POST'
-    urlTemplate: '/message'
-    description: 'Message endpoint for MCP Server'
-  }
 }
 
 // Create the MCP Streamable HTTP protocol endpoints
@@ -140,7 +116,7 @@ resource mcpPrmOperation 'Microsoft.ApiManagement/service/apis/operations@2023-0
   properties: {
     displayName: 'Protected Resource Metadata'
     method: 'GET'
-    urlTemplate: '/prm'
+    urlTemplate: '/.well-known/oauth-protected-resource'
     description: 'Protected Resource Metadata endpoint (RFC 9728)'
   }
 }
