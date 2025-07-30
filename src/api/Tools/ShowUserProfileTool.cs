@@ -1,14 +1,10 @@
 ﻿using Microsoft.Extensions.Options;
 using ModelContextProtocol.Server;
 using RemoteMcpMsGraph.Configuration;
-using RemoteMcpMsGraph.Utilities;
 using System.ComponentModel;
 using System.Text.Json;
-using Azure.Identity;
-using Microsoft.Graph;
 using System.Security.Cryptography;
 using System.Text;
-using Microsoft.Identity.Client;
 
 namespace RemoteMcpMsGraph.Tools;
 
@@ -72,31 +68,58 @@ public class ShowUserProfileTool
         try
         {
             var cancellationToken = httpContext.RequestAborted;
-            var graphClient = GraphClientHelper.CreateGraphClient(accessToken, _azureAdOptions);
-            var user = await graphClient.Me.GetAsync(cancellationToken: cancellationToken);
-
-            if (user == null)
+            
+            // Create HTTP client and request to Microsoft Graph API
+            using var httpClient = new HttpClient();
+            httpClient.DefaultRequestHeaders.Authorization = new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", accessToken);
+            
+            var response = await httpClient.GetAsync("https://graph.microsoft.com/v1.0/me", cancellationToken);
+            
+            if (!response.IsSuccessStatusCode)
+            {
+                _logger.LogWarning("Failed to retrieve user profile from Microsoft Graph. Status: {StatusCode}", response.StatusCode);
+                return CreateErrorResponse($"Failed to retrieve user profile. Status: {response.StatusCode}");
+            }
+            
+            var jsonContent = await response.Content.ReadAsStringAsync(cancellationToken);
+            
+            if (string.IsNullOrWhiteSpace(jsonContent))
             {
                 _logger.LogWarning("User profile not found in Microsoft Graph API response");
                 return CreateErrorResponse("User profile not found");
             }
-
+            
+            // Parse the JSON response to extract specific fields
+            using var jsonDocument = JsonDocument.Parse(jsonContent);
+            var root = jsonDocument.RootElement;
+            
             var userProfile = new
                 {
-                    DisplayName = user.DisplayName,
-                    Email = user.Mail ?? user.UserPrincipalName,
-                    Id = user.Id,
-                    JobTitle = user.JobTitle,
-                    Department = user.Department,
-                    OfficeLocation = user.OfficeLocation
+                    DisplayName = root.TryGetProperty("displayName", out var displayName) ? displayName.GetString() : null,
+                    Email = root.TryGetProperty("mail", out var mail) && mail.ValueKind != JsonValueKind.Null ? mail.GetString() : 
+                           (root.TryGetProperty("userPrincipalName", out var upn) ? upn.GetString() : null),
+                    Id = root.TryGetProperty("id", out var id) ? id.GetString() : null,
+                    JobTitle = root.TryGetProperty("jobTitle", out var jobTitle) && jobTitle.ValueKind != JsonValueKind.Null ? jobTitle.GetString() : null,
+                    Department = root.TryGetProperty("department", out var department) && department.ValueKind != JsonValueKind.Null ? department.GetString() : null,
+                    OfficeLocation = root.TryGetProperty("officeLocation", out var officeLocation) && officeLocation.ValueKind != JsonValueKind.Null ? officeLocation.GetString() : null
                 };
 
             return JsonSerializer.Serialize(userProfile, CreateJsonSerializerOptions());
         }
-        catch (AuthenticationFailedException ex)
+        catch (HttpRequestException ex)
         {
-            if (ex.InnerException is MsalClaimsChallengeException msalException && 
-                msalException.ErrorCode == "invalid_grant")
+            _logger.LogError(ex, "HTTP request failed while retrieving user profile");
+            return CreateErrorResponse($"HTTP request failed: {ex.Message}");
+        }
+        catch (TaskCanceledException ex)
+        {
+            _logger.LogError(ex, "Request timeout while retrieving user profile");
+            return CreateErrorResponse("Request timeout occurred");
+        }
+        catch (Exception ex)
+        {
+            // Check if the response indicates authentication/authorization issues
+            if (ex.Message.Contains("401") || ex.Message.Contains("Unauthorized"))
             {
                 var loginUrl = GenerateLoginUrl();
                 var consentResponse = new 
@@ -107,12 +130,7 @@ public class ShowUserProfileTool
                 };
                 return JsonSerializer.Serialize(consentResponse, CreateJsonSerializerOptions());
             }
-
-            _logger.LogError(ex, "Authentication failed while retrieving user profile");
-            return CreateErrorResponse($"Authentication failed: {ex.Message}");
-        }
-        catch (Exception ex)
-        {
+            
             _logger.LogError(ex, "Unexpected error occurred while retrieving user profile");
             return CreateErrorResponse($"An unexpected error occurred: {ex.Message}");
         }
